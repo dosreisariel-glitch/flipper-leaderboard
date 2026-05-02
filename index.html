@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VP3 — Virtual Pinball Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#060608; --surface:#0d0d14; --card:#12121c; --border:#1e1e30;
+  --gold:#ffd700; --silver:#c8c8e0; --bronze:#e8834a;
+  --orange:#ff6a00; --yellow:#ffe000; --pink:#ff00cc;
+  --cyan:#00e5ff; --purple:#9b30ff; --blue:#2979ff; --green:#39ff14;
+  --text:#eeeeff; --muted:#55557a; --radius:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:9999;}
+
+/* HEADER */
+header{position:relative;text-align:center;padding:2.5rem 1rem 2rem;overflow:hidden;border-bottom:1px solid var(--border);}
+header::before{content:'';position:absolute;top:50%;left:50%;width:520px;height:140px;border:2px solid rgba(0,229,255,0.13);border-radius:50%;transform:translate(-50%,-50%) rotateX(65deg);animation:ospin 8s linear infinite;pointer-events:none;}
+header::after{content:'';position:absolute;top:50%;left:50%;width:400px;height:105px;border:1px solid rgba(255,0,204,0.1);border-radius:50%;transform:translate(-50%,-50%) rotateX(65deg);animation:ospin 5s linear infinite reverse;pointer-events:none;}
+@keyframes ospin{from{transform:translate(-50%,-50%) rotateX(65deg) rotateZ(0deg);}to{transform:translate(-50%,-50%) rotateX(65deg) rotateZ(360deg);}}
+.logo-wrap{position:relative;display:inline-block;z-index:2;}
+.logo-wrap img{height:120px;width:auto;object-fit:contain;filter:drop-shadow(0 0 18px rgba(255,106,0,0.5)) drop-shadow(0 0 40px rgba(0,229,255,0.3));animation:lfloat 4s ease-in-out infinite;}
+@keyframes lfloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);filter:drop-shadow(0 0 28px rgba(255,106,0,0.7)) drop-shadow(0 0 60px rgba(0,229,255,0.5));}}
+.tagline{font-family:'Orbitron',sans-serif;font-size:0.58rem;letter-spacing:0.4em;color:var(--muted);text-transform:uppercase;margin-top:0.6rem;position:relative;z-index:2;}
+.tagline .dot{color:var(--cyan);}
+
+/* STATS */
+.stats-row{display:flex;justify-content:center;gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+.stat-box{flex:1;max-width:200px;background:var(--surface);text-align:center;padding:1rem 0.75rem;}
+.stat-box .num{font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:900;display:block;line-height:1;}
+.stat-box .lbl{font-size:0.62rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;display:block;margin-top:4px;}
+.s1 .num{color:var(--cyan);text-shadow:0 0 12px rgba(0,229,255,0.5);}
+.s2 .num{color:var(--yellow);text-shadow:0 0 12px rgba(255,224,0,0.5);}
+.s3 .num{color:var(--pink);text-shadow:0 0 12px rgba(255,0,204,0.5);}
+
+/* CONTROLS */
+.controls{display:flex;gap:0.75rem;padding:1rem 1.5rem;flex-wrap:wrap;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);}
+.ctrl-group{display:flex;align-items:center;gap:0.5rem;}
+.ctrl-group label{font-size:0.62rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;white-space:nowrap;}
+select,input[type="text"]{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:600;padding:0.35rem 0.75rem;border-radius:6px;outline:none;transition:border-color .2s,box-shadow .2s;cursor:pointer;}
+select:focus,input[type="text"]:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,0.15);}
+.live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:lpulse 2s ease-in-out infinite;vertical-align:middle;}
+@keyframes lpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+
+/* PODIUM */
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;padding:2rem 1.5rem 0;min-height:200px;}
+.podium-slot{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;max-width:200px;}
+.podium-card{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem .75rem;text-align:center;position:relative;overflow:hidden;}
+.podium-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.p1 .podium-card::before{background:linear-gradient(90deg,var(--orange),var(--yellow),var(--pink));box-shadow:0 0 12px var(--yellow);}
+.p2 .podium-card::before{background:linear-gradient(90deg,var(--cyan),var(--blue));}
+.p3 .podium-card::before{background:linear-gradient(90deg,var(--purple),var(--pink));}
+.p1 .podium-card{border-color:rgba(255,224,0,.3);transform:translateY(-20px);}
+.p2 .podium-card{border-color:rgba(0,229,255,.2);transform:translateY(-8px);}
+.p3 .podium-card{border-color:rgba(155,48,255,.2);}
+.podium-rank{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;line-height:1;}
+.p1 .podium-rank{color:var(--gold);text-shadow:0 0 16px rgba(255,215,0,.6);}
+.p2 .podium-rank{color:var(--silver);}
+.p3 .podium-rank{color:var(--bronze);}
+.podium-player{font-size:1rem;font-weight:700;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.podium-table{font-size:.7rem;color:var(--cyan);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.podium-score{font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:700;margin-top:6px;}
+.p1 .podium-score{color:var(--yellow);}
+.p2 .podium-score{color:var(--cyan);}
+.p3 .podium-score{color:var(--purple);}
+
+/* TABLE */
+.table-section{padding:1.5rem;}
+.section-title{font-family:'Orbitron',sans-serif;font-size:.62rem;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+table{width:100%;border-collapse:separate;border-spacing:0 4px;font-size:.9rem;}
+thead th{font-family:'Orbitron',sans-serif;font-size:.52rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);padding:.5rem 1rem;text-align:left;cursor:pointer;user-select:none;white-space:nowrap;transition:color .2s;}
+thead th:hover{color:var(--cyan);}
+thead th.sort-desc::after{content:' ▼';color:var(--cyan);}
+thead th.sort-asc::after{content:' ▲';color:var(--cyan);}
+tbody tr{background:var(--card);transition:background .15s,transform .1s;cursor:default;}
+tbody tr:hover{background:#1a1a28;transform:translateX(2px);}
+tbody tr td:first-child{border-radius:var(--radius) 0 0 var(--radius);}
+tbody tr td:last-child{border-radius:0 var(--radius) var(--radius) 0;}
+td{padding:.7rem 1rem;vertical-align:middle;}
+.rank-b{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:900;border:1px solid var(--border);color:var(--muted);flex-shrink:0;}
+tr.r1 .rank-b{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,.35);}
+tr.r2 .rank-b{border-color:var(--silver);color:var(--silver);}
+tr.r3 .rank-b{border-color:var(--bronze);color:var(--bronze);}
+tr.r1 td:first-child{border-left:3px solid var(--gold);}
+tr.r2 td:first-child{border-left:3px solid var(--silver);}
+tr.r3 td:first-child{border-left:3px solid var(--bronze);}
+.player-name{font-weight:700;font-size:1rem;letter-spacing:.03em;}
+tr.r1 .player-name{color:var(--gold);}
+.table-tag{color:var(--cyan);font-size:.82rem;font-weight:600;}
+.score-val{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;color:var(--green);letter-spacing:.04em;white-space:nowrap;}
+tr.r1 .score-val{color:var(--yellow);text-shadow:0 0 8px rgba(255,224,0,.4);}
+tr.r2 .score-val{color:var(--cyan);}
+.date-val{color:var(--muted);font-size:.75rem;white-space:nowrap;}
+.machine-tag{display:inline-block;padding:2px 8px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:4px;font-size:.68rem;color:var(--muted);letter-spacing:.1em;white-space:nowrap;}
+.center-msg{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.center-msg .big{font-family:'Orbitron',sans-serif;font-size:2.5rem;opacity:.2;display:block;margin-bottom:1rem;}
+.loading-txt{font-family:'Orbitron',sans-serif;font-size:.75rem;letter-spacing:.25em;color:var(--cyan);}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+.error-box{margin:1.5rem;padding:1rem 1.25rem;background:rgba(255,50,50,.07);border:1px solid rgba(255,50,50,.25);border-radius:var(--radius);color:#ff6666;font-size:.85rem;display:none;}
+footer{text-align:center;padding:1.5rem 1rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--muted);letter-spacing:.12em;}
+footer .hl{color:var(--cyan);}
+@media(max-width:640px){
+  .hide-m{display:none;}
+  .podium{gap:6px;padding:1.5rem .75rem 0;}
+  .podium-card{padding:.75rem .5rem;}
+  .table-section{padding:1rem .75rem;}
+  td,thead th{padding:.6rem .6rem;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img src="WhatsApp%20Image%202026-04-02%20at%201.03.39%20AM.jpeg" alt="VP3 Virtual Pinball">
+  </div>
+  <div class="tagline">
+    <span class="dot">◆</span> HIGH SCORES &nbsp;·&nbsp; VIRTUAL PINBALL 3 &nbsp;·&nbsp; POWERED BY PINUP POPPER <span class="dot">◆</span>
+  </div>
+</header>
+
+<div class="stats-row">
+  <div class="stat-box s1"><span class="num" id="stat-total">—</span><span class="lbl">Puntajes</span></div>
+  <div class="stat-box s2"><span class="num" id="stat-tables">—</span><span class="lbl">Mesas</span></div>
+  <div class="stat-box s3"><span class="num" id="stat-players">—</span><span class="lbl">Jugadores</span></div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group"><label>Mesa</label><select id="filter-table"></select></div>
+  <div class="ctrl-group"><label>Jugador</label><input type="text" id="filter-player" placeholder="buscar..." style="width:140px"></div>
+  <div class="ctrl-group"><label>Ver</label>
+    <select id="filter-limit">
+      <option value="50">Top 50</option>
+      <option value="100">Top 100</option>
+    </select>
+  </div>
+  <div style="margin-left:auto;font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:5px;">
+    <span class="live-dot"></span> AUTO-REFRESH 60s
+  </div>
+</div>
+
+<div class="center-msg" id="loading">
+  <span class="loading-txt">CARGANDO PUNTAJES<span class="blink">...</span></span>
+</div>
+<div class="error-box" id="error-msg"></div>
+
+<div id="podium-wrap" style="display:none">
+  <div class="podium" id="podium"></div>
+</div>
+
+<div id="table-section" class="table-section" style="display:none">
+  <div class="section-title">Ranking completo</div>
+  <table id="score-table">
+    <thead><tr>
+      <th data-col="rank">#</th>
+      <th data-col="player">Jugador</th>
+      <th data-col="table_name">Mesa</th>
+      <th data-col="score">Puntaje</th>
+      <th data-col="date" class="hide-m">Fecha</th>
+      <th data-col="machine" class="hide-m">Máquina</th>
+    </tr></thead>
+    <tbody id="score-body"></tbody>
+  </table>
+  <div class="center-msg" id="empty-state" style="display:none">
+    <span class="big">🎰</span>Sin resultados para ese filtro.
+  </div>
+</div>
+
+<footer>
+  <span class="live-dot"></span>
+  Última actualización: <span class="hl" id="last-updated">—</span>
+  &nbsp;·&nbsp; Virtual Pinball 3 &nbsp;·&nbsp; PinUP Popper + Google Sheets
+</footer>
+
+<script>
+const SHEET_ID='1ihIIttA6yHRBRaiKF15eQf5P_5BPY-iMTJ109urxS6U', SHEET_NAME='Puntajes';
+const CSV_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+let allScores=[], sortCol='score', sortDir='desc';
+const fmt=n=>Number(n).toLocaleString('es-AR');
+const fmtDate=d=>{if(!d)return'—';const dt=new Date(d);if(isNaN(dt))return d;return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});};
+
+async function loadScores(){
+  try{
+    const res=await fetch(CSV_URL);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    const rows=text.trim().split('\n');
+    const headers=rows[0].replace(/"/g,'').split(',').map(h=>h.trim().toLowerCase().replace(/ /g,'_'));
+    let data=rows.slice(1).map(row=>{
+      const vals=row.match(/(".*?"|[^,]+)/g)||[];
+      const obj={};
+      headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim();});
+      return obj;
+    }).filter(r=>r.jugador||r.player||r.player_name);
+    allScores=data.map(r=>({
+      player:r.jugador||r.player||r.player_name||'???',
+      table_name:r.mesa||r.table||r.table_name||'Desconocida',
+      score:parseInt((r.puntaje||r.score||'0').replace(/[^0-9]/g,''))||0,
+      date:r.fecha||r.date||'',machine:r.maquina||r.machine||''
+    }));
+    document.getElementById('loading').style.display='none';
+    document.getElementById('podium-wrap').style.display='block';
+    document.getElementById('table-section').style.display='block';
+    populateFilters(); renderAll();
+    document.getElementById('last-updated').textContent=new Date().toLocaleString('es-AR');
+  }catch(e){
+    document.getElementById('loading').style.display='none';
+    const eb=document.getElementById('error-msg');
+    eb.style.display='block';
+    eb.textContent='⚠ No se pudo cargar la planilla. Verificá SHEET_ID y que la hoja sea pública. ('+e.message+')';
+  }
+}
+
+function populateFilters(){
+  const tables=[...new Set(allScores.map(r=>r.table_name))].sort();
+  const sel=document.getElementById('filter-table');
+  sel.innerHTML='';
+  tables.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+  
+  if (tables.length > 0) {
+      sel.value = tables[0];
+  }
+}
+
+function filtered(){
+  const ft=document.getElementById('filter-table').value;
+  const fp=document.getElementById('filter-player').value.toLowerCase();
+  return allScores.filter(r=>{
+    if(ft&&r.table_name!==ft)return false;
+    if(fp&&!r.player.toLowerCase().includes(fp))return false;
+    return true;
+  });
+}
+
+function renderPodium(data){
+  const top3=[...data].sort((a,b)=>b.score-a.score).slice(0,3);
+  const order=[1,0,2],ranks=['p2','p1','p3'],nums=['2','1','3'];
+  const podium=document.getElementById('podium');
+  podium.innerHTML='';
+  order.forEach((idx,di)=>{
+    const r=top3[idx]; if(!r)return;
+    const slot=document.createElement('div');
+    slot.className='podium-slot '+ranks[di];
+    slot.innerHTML=`<div class="podium-card"><div class="podium-rank">${nums[di]}</div><div class="podium-player">${r.player}</div><div class="podium-table">${r.table_name}</div><div class="podium-score">${fmt(r.score)}</div></div>`;
+    podium.appendChild(slot);
+  });
+}
+
+function renderTable(data){
+  const limit=parseInt(document.getElementById('filter-limit').value)||0;
+  let sorted=[...data].sort((a,b)=>{
+    let va=a[sortCol],vb=b[sortCol];
+    if(sortCol==='score'){va=a.score;vb=b.score;}
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return sortDir==='asc'?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);
+  });
+  if(limit>0)sorted=sorted.slice(0,limit);
+  const tbody=document.getElementById('score-body');
+  tbody.innerHTML='';
+  if(!sorted.length){document.getElementById('score-table').style.display='none';document.getElementById('empty-state').style.display='block';return;}
+  document.getElementById('score-table').style.display='table';
+  document.getElementById('empty-state').style.display='none';
+  sorted.forEach((r,i)=>{
+    const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const tr=document.createElement('tr');
+    if(rc)tr.className=rc;
+    tr.innerHTML=`<td><div class="rank-b">${i+1}</div></td><td><div class="player-name">${r.player}</div></td><td><div class="table-tag">${r.table_name}</div></td><td><div class="score-val">${fmt(r.score)}</div></td><td class="hide-m"><div class="date-val">${fmtDate(r.date)}</div></td><td class="hide-m">${r.machine?`<span class="machine-tag">${r.machine}</span>`:'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAll(){
+  const data=filtered();
+  document.getElementById('stat-total').textContent=data.length;
+  document.getElementById('stat-tables').textContent=new Set(data.map(r=>r.table_name)).size;
+  document.getElementById('stat-players').textContent=new Set(data.map(r=>r.player)).size;
+  renderPodium(data); renderTable(data);
+}
+
+document.querySelectorAll('thead th[data-col]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col=th.dataset.col; if(col==='rank')return;
+    if(sortCol===col){sortDir=sortDir==='asc'?'desc':'asc';}else{sortCol=col;sortDir=col==='score'?'desc':'asc';}
+    document.querySelectorAll('thead th').forEach(t=>{t.className=t.className.replace(/ sort-(asc|desc)/g,'');});
+    th.className+=' sort-'+sortDir;
+    renderAll();
+  });
+});
+
+document.getElementById('filter-table').addEventListener('change',renderAll);
+document.getElementById('filter-player').addEventListener('input',renderAll);
+document.getElementById('filter-limit').addEventListener('change',renderAll);
+
+loadScores();
+setInterval(loadScores,60000);
+</script>
+</body>
+</html>
