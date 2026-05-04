@@ -37,7 +37,13 @@ header::after{content:'';position:absolute;top:50%;left:50%;width:400px;height:1
 .s2 .num{color:var(--yellow);text-shadow:0 0 12px rgba(255,224,0,0.5);}
 .s3 .num{color:var(--pink);text-shadow:0 0 12px rgba(255,0,204,0.5);}
 
-/* CONTROLS */
+/* TABS (NAVEGACION) */
+.tabs{display:flex;justify-content:center;flex-wrap:wrap;gap:0.5rem;padding:1rem;background:var(--surface);border-bottom:1px solid var(--border);}
+.tab-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:'Orbitron',sans-serif;font-size:0.75rem;letter-spacing:0.1em;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.tab-btn.active{background:rgba(0,229,255,0.1);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(0,229,255,0.2);}
+.tab-btn:hover:not(.active){border-color:var(--text);color:var(--text);}
+
+/* CONTROLS (FILTROS) */
 .controls{display:flex;gap:0.75rem;padding:1rem 1.5rem;flex-wrap:wrap;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);}
 .ctrl-group{display:flex;align-items:center;gap:0.5rem;}
 .ctrl-group label{font-size:0.62rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;white-space:nowrap;}
@@ -45,6 +51,22 @@ select,input[type="text"]{background:var(--card);border:1px solid var(--border);
 select:focus,input[type="text"]:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,0.15);}
 .live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:lpulse 2s ease-in-out infinite;vertical-align:middle;}
 @keyframes lpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+
+/* FAMA GRID (PANTALLA PRINCIPAL) */
+.fama-wrap{padding:2rem 1.5rem;}
+.fama-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.5rem;}
+.fama-card{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:var(--radius);padding:1.5rem;text-align:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
+.fama-card:hover{transform:translateY(-5px);box-shadow:0 8px 20px rgba(255,215,0,0.15);border-color:var(--gold);}
+.fama-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fama-crown{font-size:2rem;margin-bottom:0.5rem;display:block;}
+.fama-player{font-family:'Orbitron',sans-serif;font-size:1.2rem;color:var(--gold);font-weight:900;}
+.fama-score{font-family:'Orbitron',sans-serif;font-size:1.5rem;color:var(--yellow);margin-top:0.5rem;}
+
+/* DESAFIO BANNER */
+.desafio-banner{margin:1.5rem;padding:2rem;background:linear-gradient(45deg, rgba(255,0,204,0.1), rgba(0,229,255,0.1));border:2px solid var(--pink);border-radius:var(--radius);text-align:center;position:relative;overflow:hidden;box-shadow:0 0 20px rgba(255,0,204,0.2);}
+.d-title{font-family:'Orbitron',sans-serif;color:var(--pink);font-size:1rem;letter-spacing:0.3em;text-transform:uppercase;}
+.d-mesa{font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;color:var(--text);text-shadow:0 0 15px rgba(0,229,255,0.6);margin:0.5rem 0;}
+.d-timer{font-size:1rem;color:var(--cyan);letter-spacing:0.1em;font-weight:600;}
 
 /* PODIUM */
 .podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;padding:2rem 1.5rem 0;min-height:200px;}
@@ -131,18 +153,11 @@ footer .hl{color:var(--cyan);}
   <div class="stat-box s3"><span class="num" id="stat-players">—</span><span class="lbl">Jugadores</span></div>
 </div>
 
-<div class="controls">
-  <div class="ctrl-group"><label>Mesa</label><select id="filter-table"></select></div>
-  <div class="ctrl-group"><label>Jugador</label><input type="text" id="filter-player" placeholder="buscar..." style="width:140px"></div>
-  <div class="ctrl-group"><label>Ver</label>
-    <select id="filter-limit">
-      <option value="50">Top 50</option>
-      <option value="100">Top 100</option>
-    </select>
-  </div>
-  <div style="margin-left:auto;font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:5px;">
-    <span class="live-dot"></span> AUTO-REFRESH 60s
-  </div>
+<!-- NAVEGACION PRINCIPAL -->
+<div class="tabs">
+  <button class="tab-btn active" id="btn-fama" onclick="setView('fama')">👑 Salón de la Fama</button>
+  <button class="tab-btn" id="btn-desafio" onclick="setView('desafio')">🔥 Desafío Semanal</button>
+  <button class="tab-btn" id="btn-mesas" onclick="setView('mesas')">📊 Ranking por Mesa</button>
 </div>
 
 <div class="center-msg" id="loading">
@@ -150,25 +165,62 @@ footer .hl{color:var(--cyan);}
 </div>
 <div class="error-box" id="error-msg"></div>
 
-<div id="podium-wrap" style="display:none">
-  <div class="podium" id="podium"></div>
+<!-- VISTA 1: SALON DE LA FAMA -->
+<div id="view-fama" style="display:none;">
+  <div class="fama-wrap">
+    <div class="section-title">Grandes Campeones VP3</div>
+    <div class="fama-grid" id="fama-grid"></div>
+  </div>
 </div>
 
-<div id="table-section" class="table-section" style="display:none">
-  <div class="section-title">Ranking completo</div>
-  <table id="score-table">
-    <thead><tr>
-      <th data-col="rank">#</th>
-      <th data-col="player">Jugador</th>
-      <th data-col="table_name">Mesa</th>
-      <th data-col="score">Puntaje</th>
-      <th data-col="date" class="hide-m">Fecha</th>
-      <th data-col="machine" class="hide-m">Máquina</th>
-    </tr></thead>
-    <tbody id="score-body"></tbody>
-  </table>
-  <div class="center-msg" id="empty-state" style="display:none">
-    <span class="big">🎰</span>Sin resultados para ese filtro.
+<!-- VISTA 2: DESAFIO SEMANAL -->
+<div id="view-desafio" style="display:none;">
+  <div class="desafio-banner">
+    <div class="d-title">Desafío Oficial de la Semana</div>
+    <div class="d-mesa" id="desafio-mesa-nombre">CARGANDO...</div>
+    <div class="d-timer" id="desafio-timer">Calculando tiempo restante...</div>
+  </div>
+</div>
+
+<!-- VISTA 3: CONTROLES DE MESAS -->
+<div id="view-mesas" style="display:none;">
+  <div class="controls">
+    <div class="ctrl-group"><label>Mesa</label><select id="filter-table"></select></div>
+    <div class="ctrl-group"><label>Jugador</label><input type="text" id="filter-player" placeholder="buscar..." style="width:140px"></div>
+    <div class="ctrl-group"><label>Ver</label>
+      <select id="filter-limit">
+        <option value="50">Top 50</option>
+        <option value="100">Top 100</option>
+      </select>
+    </div>
+    <div style="margin-left:auto;font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:5px;">
+      <span class="live-dot"></span> AUTO-REFRESH 60s
+    </div>
+  </div>
+</div>
+
+<!-- COMPARTIDO: PODIO Y TABLA -->
+<div id="shared-content" style="display:none;">
+  <div id="podium-wrap">
+    <div class="podium" id="podium"></div>
+  </div>
+
+  <div id="table-section" class="table-section">
+    <div class="section-title">Ranking Completo</div>
+    <table id="score-table">
+      <thead><tr>
+        <th data-col="rank">#</th>
+        <th data-col="player">Jugador</th>
+        <th data-col="table_name">Mesa</th>
+        <th data-col="score">Puntaje</th>
+        <th data-col="date" class="hide-m">Fecha</th>
+        <th data-col="machine" class="hide-m">Máquina</th>
+      </tr></thead>
+      <tbody id="score-body"></tbody>
+    </table>
+    <div class="center-msg" id="empty-state" style="display:none">
+      <span class="big">🎰</span>Sin resultados para ese filtro.
+    </div>
   </div>
 </div>
 
@@ -183,6 +235,9 @@ const SHEET_ID='1ihIIttA6yHRBRaiKF15eQf5P_5BPY-iMTJ109urxS6U', SHEET_NAME='Punta
 const CSV_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
 let allScores=[], sortCol='score', sortDir='desc';
+let currentView = 'fama';
+let challengeTableGlobal = "";
+
 const fmt=n=>Number(n).toLocaleString('es-AR');
 const fmtDate=d=>{if(!d)return'—';const dt=new Date(d);if(isNaN(dt))return d;return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});};
 
@@ -199,34 +254,70 @@ async function loadScores(){
       headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim();});
       return obj;
     }).filter(r=>r.jugador||r.player||r.player_name);
+    
     allScores=data.map(r=>({
       player:r.jugador||r.player||r.player_name||'???',
       table_name:r.mesa||r.table||r.table_name||'Desconocida',
       score:parseInt((r.puntaje||r.score||'0').replace(/[^0-9]/g,''))||0,
       date:r.fecha||r.date||'',machine:r.maquina||r.machine||''
     }));
+    
     document.getElementById('loading').style.display='none';
-    document.getElementById('podium-wrap').style.display='block';
-    document.getElementById('table-section').style.display='block';
-    populateFilters(); renderAll();
+    populateFilters();
+    setView(currentView); // Inicia la vista activa
     document.getElementById('last-updated').textContent=new Date().toLocaleString('es-AR');
   }catch(e){
     document.getElementById('loading').style.display='none';
     const eb=document.getElementById('error-msg');
     eb.style.display='block';
-    eb.textContent='⚠ No se pudo cargar la planilla. Verificá SHEET_ID y que la hoja sea pública. ('+e.message+')';
+    eb.textContent='⚠ No se pudo cargar la planilla. ('+e.message+')';
   }
+}
+
+function setView(v) {
+    currentView = v;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('btn-'+v).classList.add('active');
+
+    document.getElementById('view-fama').style.display = v==='fama'?'block':'none';
+    document.getElementById('view-desafio').style.display = v==='desafio'?'block':'none';
+    document.getElementById('view-mesas').style.display = v==='mesas'?'block':'none';
+    document.getElementById('shared-content').style.display = (v==='desafio' || v==='mesas')?'block':'none';
+
+    renderAll();
+}
+
+function calculateWeeklyChallenge() {
+    const tables = [...new Set(allScores.map(r=>r.table_name))].sort();
+    if(tables.length === 0) return;
+
+    // Fecha base: Miércoles 6 de Mayo de 2026 a las 00:00:00
+    const baseDate = new Date('2026-05-06T00:00:00-03:00').getTime();
+    const now = new Date().getTime();
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+
+    let weekDiff = Math.floor((now - baseDate) / msPerWeek);
+    let index = ((weekDiff % tables.length) + tables.length) % tables.length;
+
+    const msInCurrentWeek = (now - baseDate) - (weekDiff * msPerWeek);
+    const msRemaining = msPerWeek - msInCurrentWeek;
+
+    const days = Math.floor(msRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((msRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    document.getElementById('desafio-timer').textContent = `Faltan ${days} días y ${hours} horas para el recambio`;
+    challengeTableGlobal = tables[index];
+    document.getElementById('desafio-mesa-nombre').textContent = challengeTableGlobal;
 }
 
 function populateFilters(){
   const tables=[...new Set(allScores.map(r=>r.table_name))].sort();
   const sel=document.getElementById('filter-table');
+  const currentVal = sel.value;
   sel.innerHTML='';
   tables.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
-  
-  if (tables.length > 0) {
-      sel.value = tables[0];
-  }
+  if (tables.includes(currentVal)) { sel.value = currentVal; } 
+  else if (tables.length > 0) { sel.value = tables[0]; }
 }
 
 function filtered(){
@@ -237,6 +328,54 @@ function filtered(){
     if(fp&&!r.player.toLowerCase().includes(fp))return false;
     return true;
   });
+}
+
+function renderAll(){
+  if(allScores.length === 0) return;
+
+  document.getElementById('stat-total').textContent=allScores.length;
+  document.getElementById('stat-tables').textContent=new Set(allScores.map(r=>r.table_name)).size;
+  document.getElementById('stat-players').textContent=new Set(allScores.map(r=>r.player)).size;
+
+  if (currentView === 'fama') {
+      renderFama();
+  } else if (currentView === 'desafio') {
+      calculateWeeklyChallenge();
+      const data = allScores.filter(r => r.table_name === challengeTableGlobal);
+      renderPodium(data);
+      renderTable(data);
+  } else {
+      const data = filtered();
+      renderPodium(data);
+      renderTable(data);
+  }
+}
+
+function renderFama() {
+    const tables = [...new Set(allScores.map(r=>r.table_name))].sort();
+    const grid = document.getElementById('fama-grid');
+    grid.innerHTML = '';
+
+    tables.forEach(t => {
+        const scoresForTable = allScores.filter(r => r.table_name === t);
+        const best = scoresForTable.sort((a,b)=>b.score - a.score)[0];
+        if(!best) return;
+
+        const card = document.createElement('div');
+        card.className = 'fama-card';
+        card.onclick = () => {
+            document.getElementById('filter-table').value = t;
+            setView('mesas');
+        };
+
+        card.innerHTML = `
+            <div class="fama-title">${t}</div>
+            <div class="fama-crown">👑</div>
+            <div class="fama-player">${best.player}</div>
+            <div class="fama-score">${fmt(best.score)}</div>
+        `;
+        grid.appendChild(card);
+    });
 }
 
 function renderPodium(data){
@@ -276,14 +415,6 @@ function renderTable(data){
   });
 }
 
-function renderAll(){
-  const data=filtered();
-  document.getElementById('stat-total').textContent=data.length;
-  document.getElementById('stat-tables').textContent=new Set(data.map(r=>r.table_name)).size;
-  document.getElementById('stat-players').textContent=new Set(data.map(r=>r.player)).size;
-  renderPodium(data); renderTable(data);
-}
-
 document.querySelectorAll('thead th[data-col]').forEach(th=>{
   th.addEventListener('click',()=>{
     const col=th.dataset.col; if(col==='rank')return;
@@ -299,7 +430,10 @@ document.getElementById('filter-player').addEventListener('input',renderAll);
 document.getElementById('filter-limit').addEventListener('change',renderAll);
 
 loadScores();
-setInterval(loadScores,60000);
+setInterval(()=>{
+    loadScores();
+    if(currentView === 'desafio') calculateWeeklyChallenge();
+}, 60000);
 </script>
 </body>
 </html>
